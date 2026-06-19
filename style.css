@@ -1,0 +1,59 @@
+hr {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid #ddd;
+    margin: 30px 0;
+}
+
+.admin-panel {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.admin-panel h3 {
+    margin-top: 0;
+    color: #444;
+    font-size: 18px;
+}
+
+#btnExportar {
+    background-color: #28a745;
+    margin-bottom: 20px;
+}
+
+#btnExportar:hover {
+    background-color: #218838;
+}
+
+.import-section label {
+    font-size: 14px;
+    color: #555;
+}
+
+#inputImportar {
+    font-size: 14px;
+    padding: 5px;
+    margin-bottom: 0;
+}
+
+/* Adicione no final do seu style.css */
+.upload-historico {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #ced4da;
+}
+
+.upload-historico label {
+    color: #495057;
+}
+
+#inputHistorico {
+    margin-top: 10px;
+    margin-bottom: 0;
+}

@@ -1,0 +1,148 @@
+// ---------------------------------------------------
+// MÓDULO: GERAÇÃO DO PLANO DE ESTUDOS
+// ---------------------------------------------------
+
+// Botão 1: Copia o código HTML puro (perfeito para o botão < > do SEI)
+document.getElementById('btnCopiarSEI').addEventListener('click', function() {
+    const html = gerarHTMLPlanoEstudos();
+    navigator.clipboard.writeText(html).then(() => {
+        alert("Código copiado com sucesso! Vá no SEI, clique em '< >' (Código Fonte) e cole.");
+    }).catch(err => {
+        alert("Erro ao copiar automaticamente.");
+        console.error('Erro ao copiar código: ', err);
+    });
+});
+
+// Botão 2: Converte a tabela para um arquivo real do Word
+document.getElementById('btnBaixarWord').addEventListener('click', function() {
+    const htmlTabela = gerarHTMLPlanoEstudos();
+    
+    // Essa estrutura "engana" o arquivo e avisa ao computador que se trata de um formato do Microsoft Word
+    const htmlParaWord = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+            <meta charset='utf-8'>
+            <title>Plano de Estudos</title>
+        </head>
+        <body>
+            ${htmlTabela}
+        </body>
+        </html>
+    `;
+
+    // O '\ufeff' avisa que o arquivo usa acentuação (UTF-8)
+    const blob = new Blob(['\ufeff', htmlParaWord], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = "Plano_de_Estudos_FAODO.doc";
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+});
+
+// Atualiza a prévia sempre que você digitar o nome ou RGA do aluno
+document.getElementById('nomeAluno').addEventListener('input', function() {
+    if (document.getElementById('acoesPlano').style.display === "block") {
+        document.getElementById('previewPlano').innerHTML = gerarHTMLPlanoEstudos();
+    }
+});
+
+document.getElementById('rgaAluno').addEventListener('input', function() {
+    if (document.getElementById('acoesPlano').style.display === "block") {
+        document.getElementById('previewPlano').innerHTML = gerarHTMLPlanoEstudos();
+    }
+});
+
+// ---------------------------------------------------
+// FUNÇÃO QUE MONTA A TABELA BASEADA NO SEI E IN 40
+// ---------------------------------------------------
+function gerarHTMLPlanoEstudos() {
+    const nome = document.getElementById('nomeAluno').value || "Não informado";
+    const rga = document.getElementById('rgaAluno').value || "Não informado";
+
+    let html = `
+<p class="Item_Nivel1" style="font-weight: bold;">Identificação do Acadêmico:</p>
+<p class="Texto_Justificado">Nome: ${nome}</p>
+<p class="Texto_Justificado">RGA na UFMS: ${rga}</p>
+<p class="Texto_Justificado">Enquadramento: ${ultimoEnquadramento}</p>
+<p class="Texto_Justificado">&nbsp;</p>
+
+<p class="Item_Nivel1" style="font-weight: bold;">Plano de estudos das disciplinas:</p>
+<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:100%;" border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th style="background-color:#cccccc;"><p class="Tabela_Texto_Centralizado">Disciplinas a serem cursadas no semestre atual</p></th>
+            <th style="background-color:#cccccc;"><p class="Tabela_Texto_Centralizado">Indicação da turma prática</p></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td><p class="Tabela_Texto_Alinhado_Esquerda">&nbsp;</p></td><td><p class="Tabela_Texto_Centralizado">&nbsp;</p></td></tr>
+        <tr><td><p class="Tabela_Texto_Alinhado_Esquerda">&nbsp;</p></td><td><p class="Tabela_Texto_Centralizado">&nbsp;</p></td></tr>
+        <tr><td><p class="Tabela_Texto_Alinhado_Esquerda">&nbsp;</p></td><td><p class="Tabela_Texto_Centralizado">&nbsp;</p></td></tr>
+        <tr><td><p class="Tabela_Texto_Alinhado_Esquerda">&nbsp;</p></td><td><p class="Tabela_Texto_Centralizado">&nbsp;</p></td></tr>
+    </tbody>
+</table>
+<p class="Texto_Alinhado_Esquerda">&nbsp;</p>
+
+<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:100%;" border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th style="background-color:#cccccc;width:60%;"><p class="Tabela_Texto_Centralizado">Disciplina a serem cursadas em semestres posteriores</p></th>
+            <th style="background-color:#cccccc;width:20%;"><p class="Tabela_Texto_Centralizado">Indicação do Semestre:</p></th>
+            <th style="background-color:#cccccc;width:20%;"><p class="Tabela_Texto_Centralizado">Carga horária</p></th>
+        </tr>
+    </thead>
+    <tbody>`;
+
+    // Garante que os dados existem antes de tentar varrer
+    if(dadosDoCurso && dadosDoCurso.semestres) {
+        dadosDoCurso.semestres.forEach(semestre => {
+            let disciplinasPendentes = semestre.disciplinas.filter(d => {
+                return !disciplinasAprovadas.includes(normalizarNome(d.nome));
+            });
+
+            if (disciplinasPendentes.length > 0) {
+                html += `
+        <tr>
+            <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda"><strong>${semestre.numero}° semestre</strong></p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+        </tr>`;
+                
+                let totalCH = 0;
+                disciplinasPendentes.forEach(d => {
+                    totalCH += d.ch;
+                    html += `
+        <tr>
+            <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda">${d.nome}</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">${d.ch}</p></td>
+        </tr>`;
+                });
+
+                html += `
+        <tr>
+            <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda"><strong>TOTAL</strong></p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado"><strong>${totalCH}</strong></p></td>
+        </tr>
+        <tr>
+            <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+        </tr>`;
+            }
+        });
+    }
+
+    html += `
+    </tbody>
+</table>`;
+
+    return html;
+}
