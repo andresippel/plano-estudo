@@ -1,5 +1,8 @@
 {
   "curso": "Odontologia",
+  "ch_total_curso": 4090,
+  "ch_optativas_exigidas": 60,
+  "ch_extensao_exigida": 409,
   "semestres": [
     {
       "numero": 1,

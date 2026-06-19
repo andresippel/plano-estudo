@@ -173,12 +173,18 @@ function gerarHTMLPlanoEstudos() {
     </tbody>
 </table>`;
 
-    const optCursada = window.chOptCursada || 0;
-    const optACursar = Math.max(0, 60 - optCursada);
+// --- CÁLCULO DOS ITENS DE RESUMO (3, 4 E 5) DINÂMICOS ---
     
-    const totalCurso = 4090;
+    // Puxa as exigências do JSON. Se o curso esquecer de colocar no JSON, usa Odonto como padrão por segurança.
+    const reqOptativas = (window.dadosDoCurso && window.dadosDoCurso.ch_optativas_exigidas) ? window.dadosDoCurso.ch_optativas_exigidas : 60;
+    const reqExtensao = (window.dadosDoCurso && window.dadosDoCurso.ch_extensao_exigida) ? window.dadosDoCurso.ch_extensao_exigida : 409;
+    const reqTotalCurso = (window.dadosDoCurso && window.dadosDoCurso.ch_total_curso) ? window.dadosDoCurso.ch_total_curso : 4090;
+
+    const optCursada = window.chOptCursada || 0;
+    const optACursar = Math.max(0, reqOptativas - optCursada);
+    
     const totalCursada = window.chTotalCursada || 0;
-    const aCursarTotal = Math.max(0, totalCurso - totalCursada);
+    const aCursarTotal = Math.max(0, reqTotalCurso - totalCursada);
 
     html += `
 <p class="Texto_Alinhado_Esquerda">&nbsp;</p>
@@ -189,7 +195,7 @@ function gerarHTMLPlanoEstudos() {
 
 <p class="Item_Nivel1" style="font-weight: bold;">4. CARGA HORÁRIA EM ATIVIDADES DE EXTENSÃO NECESSÁRIAS:</p>
 <p class="Texto_Justificado">Carga horária em atividades de extensão cursadas: 0 horas</p>
-<p class="Texto_Justificado">Carga horária em atividades de extensão a cursar: 409 horas</p>
+<p class="Texto_Justificado">Carga horária em atividades de extensão a cursar: ${reqExtensao} horas</p>
 <p class="Texto_Justificado">&nbsp;</p>
 
 <p class="Item_Nivel1" style="font-weight: bold;">5. CARGA HORÁRIA DE DISCIPLINAS NECESSÁRIAS PARA A INTEGRALIZAÇÃO CURRICULAR:</p>
