@@ -3,58 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enquadramento do Estudante - FAODO</title>
+    <title>Enquadramento e Plano de Estudos</title>
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+    <header class="top-bar">
+        <h1>Sistema de Enquadramento e Plano de Estudos</h1>
+    </header>
+
     <main class="container">
-        <h2>Verifique o Enquadramento do Estudante</h2>
-        <p id="cursoAtual">Carregando dados do curso...</p>
-        
-        <div class="upload-historico">
-            <label for="inputHistorico"><strong>Opção 1:</strong> Faça o upload do Histórico do Aluno (Excel/CSV):</label>
-            <input type="file" id="inputHistorico" accept=".xlsx, .xls, .csv">
+        <div class="card status-card">
+            <p id="cursoAtual">Carregando dados do curso...</p>
         </div>
 
-        <hr>
-
-        <label for="cargaHoraria"><strong>Opção 2:</strong> Ou digite a Carga Horária Obrigatória Cursada manualmente:</label>
-        <input type="number" id="cargaHoraria" placeholder="Ex: 1500" min="0">
-        <button id="btnCalcular">Calcular Enquadramento</button>
-
-        <p id="resultado"></p>
-
-        <hr>
-
-        <div class="admin-panel">
-            <h3>Gerenciar Grade do Curso</h3>
-            <button id="btnExportar">Exportar Grade (JSON)</button>
-            
-            <div class="import-section">
-                <label for="inputImportar">Importar Grade (JSON):</label>
-                <input type="file" id="inputImportar" accept=".json">
+        <div class="card">
+            <h3>Identificação do Acadêmico</h3>
+            <div class="aluno-info">
+                <input type="text" id="nomeAluno" placeholder="Nome do Acadêmico">
+                <input type="text" id="rgaAluno" placeholder="RGA na Instituição">
             </div>
         </div>
 
-        <div id="acoesPlano" style="display: none; margin-top: 20px;">
-            <hr>
+        <div class="card">
+            <h3>Processamento de Histórico</h3>
+            <p class="subtitle">Faça o upload do histórico (Excel/CSV) para extrair os dados automaticamente.</p>
+            
+            <div class="drop-zone" id="dropZoneHistorico">
+                <span class="drop-icon">📄</span>
+                <p>Arraste e solte o Histórico Escolar aqui ou <label for="inputHistorico" class="file-label">clique para selecionar</label></p>
+                <input type="file" id="inputHistorico" accept=".xlsx, .xls, .csv" hidden>
+            </div>
+
+            <div class="divider"><span>OU</span></div>
+
+            <div class="manual-input">
+                <label for="cargaHoraria">Digite a Carga Horária Obrigatória Cursada manualmente:</label>
+                <div class="input-group">
+                    <input type="number" id="cargaHoraria" placeholder="Ex: 1500" min="0">
+                    <button id="btnCalcular" class="btn-primary">Calcular Enquadramento</button>
+                </div>
+            </div>
+            
+            <p id="resultado" class="resultado-destaque"></p>
+        </div>
+
+        <div id="acoesPlano" class="card" style="display: none;">
             <h3>Plano de Estudos Gerado</h3>
-            <p style="font-size: 14px; color: #555;">Confira a prévia abaixo e escolha como deseja exportar:</p>
+            <p class="subtitle">Confira a prévia abaixo e escolha como deseja exportar o documento oficial.</p>
             
-            <button id="btnCopiarSEI" class="btn-info">Copiar para colar no SEI (<>)</button>
-            <button id="btnBaixarWord" class="btn-warning">Baixar documento do Word (.doc)</button>
+            <div class="button-group">
+                <button id="btnCopiarSEI" class="btn-info">Copiar Código para o SEI ( < > )</button>
+                <button id="btnBaixarWord" class="btn-warning">Baixar documento do Word (.doc)</button>
+            </div>
             
-            <div id="previewPlano" style="margin-top: 20px; padding: 30px; border: 1px solid #ccc; background: white; color: black; text-align: left; overflow-x: auto; box-shadow: inset 0 0 10px rgba(0,0,0,0.05);">
+            <div id="previewPlano" class="preview-box">
                 </div>
         </div>
-        
+
+        <div class="card admin-card">
+            <h3>Gerenciar Grade do Curso</h3>
+            <p class="subtitle">Se necessário, importe a configuração de grade de outro curso.</p>
+            
+            <div class="admin-actions">
+                <div class="drop-zone drop-zone-small" id="dropZoneImportar">
+                    <span class="drop-icon">⚙️</span>
+                    <p>Arraste um novo arquivo .json de Grade ou <label for="inputImportar" class="file-label">selecione</label></p>
+                    <input type="file" id="inputImportar" accept=".json" hidden>
+                </div>
+                <button id="btnExportar" class="btn-outline">Exportar Grade Atual (JSON)</button>
+            </div>
+        </div>
     </main>
 
-    <footer>
-       
-    </footer>
+    <footer>Criado por André Augusto Sippel da Silva - 2026</footer>
 
     <script src="main.js"></script>
     <script src="plano_estudos.js"></script>

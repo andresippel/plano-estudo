@@ -1,26 +1,100 @@
-// Variáveis globais anexadas ao escopo da janela para compartilhamento seguro
 window.dadosDoCurso = null;
 window.disciplinasAprovadas = [];
 window.disciplinasMatriculadas = [];
 window.chOptCursada = 0;
 window.chTotalCursada = 0;
 window.ultimoEnquadramento = "";
-window.nomeDoAlunoPlanilha = ""; // Nova variável global de segurança
-window.rgaDoAlunoPlanilha = "";  // Nova variável global de segurança
+window.nomeDoAlunoPlanilha = ""; 
+window.rgaDoAlunoPlanilha = "";  
 
 function normalizarNome(nome) {
     if (!nome) return "";
     return String(nome).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 }
 
+// Configura o visual e a captura de arquivos arrastados
+function configurarDragAndDrop(idDropZone, idInput) {
+    const dropZone = document.getElementById(idDropZone);
+    const inputElement = document.getElementById(idInput);
+
+    if (!dropZone || !inputElement) return;
+
+    // Efeitos visuais ao passar o mouse com o arquivo
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    ['dragleave', 'dragend'].forEach(type => {
+        dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
+    });
+
+    // Captura o arquivo quando ele é solto na área
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            inputElement.files = e.dataTransfer.files;
+            inputElement.dispatchEvent(new Event('change')); // Aciona o processamento
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const btnCalcular = document.getElementById('btnCalcular');
     const inputHistorico = document.getElementById('inputHistorico');
+    const inputImportar = document.getElementById('inputImportar');
+    const btnExportar = document.getElementById('btnExportar');
+
+    // Inicializa as zonas de arrastar
+    configurarDragAndDrop('dropZoneHistorico', 'inputHistorico');
+    configurarDragAndDrop('dropZoneImportar', 'inputImportar');
 
     if (btnCalcular) btnCalcular.addEventListener('click', calcularSemestre);
     if (inputHistorico) inputHistorico.addEventListener('change', processarHistorico);
 
-    const dadosSalvos = localStorage.getItem('gradeCurso_v2');
+    if (inputImportar) {
+        inputImportar.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonImportado = JSON.parse(e.target.result);
+                    window.dadosDoCurso = jsonImportado;
+                    localStorage.setItem('gradeCurso_v3', JSON.stringify(jsonImportado));
+                    atualizarInterfaceCurso();
+                    alert(`Grade do curso de ${jsonImportado.curso} importada com sucesso!`);
+                } catch (erro) {
+                    alert("Erro ao ler o arquivo JSON. Verifique se o formato está correto.");
+                }
+                event.target.value = ''; 
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    if (btnExportar) {
+        btnExportar.addEventListener('click', function() {
+            if (!window.dadosDoCurso) {
+                alert("Não há dados para exportar!");
+                return;
+            }
+            const textoJSON = JSON.stringify(window.dadosDoCurso, null, 2);
+            const blob = new Blob([textoJSON], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `grade_${window.dadosDoCurso.curso}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    const dadosSalvos = localStorage.getItem('gradeCurso_v3');
     if (dadosSalvos) {
         window.dadosDoCurso = JSON.parse(dadosSalvos);
         atualizarInterfaceCurso();
@@ -29,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 window.dadosDoCurso = data;
-                localStorage.setItem('gradeCurso_v2', JSON.stringify(data));
+                localStorage.setItem('gradeCurso_v3', JSON.stringify(data));
                 atualizarInterfaceCurso();
             })
             .catch(error => console.error("Erro ao carregar o JSON do curso:", error));
@@ -39,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function atualizarInterfaceCurso() {
     const el = document.getElementById('cursoAtual');
     if (el && window.dadosDoCurso && window.dadosDoCurso.curso) {
-        el.textContent = `Curso carregado: ${window.dadosDoCurso.curso}`;
+        el.textContent = `Grade Ativa: ${window.dadosDoCurso.curso}`;
     }
 }
 
@@ -54,23 +128,19 @@ function processarHistorico(event) {
             const workbook = XLSX.read(data, { type: 'array' });
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            // ESTRATÉGIA SEGURA: Converte para matriz bruta para ler as duas primeiras linhas (A1 e A2)
             const matrizRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
             
             const nomeEstudante = matrizRaw[0] && matrizRaw[0][0] ? String(matrizRaw[0][0]).trim() : "";
             const rgaEstudante = matrizRaw[1] && matrizRaw[1][0] ? String(matrizRaw[1][0]).trim() : "";
 
-            // Guarda nas variáveis globais partilhadas
             window.nomeDoAlunoPlanilha = nomeEstudante;
             window.rgaDoAlunoPlanilha = rgaEstudante;
 
-            // Atualiza visualmente os inputs na página
             const elNomeInput = document.getElementById('nomeAluno');
             const elRgaInput = document.getElementById('rgaAluno');
             if (elNomeInput) elNomeInput.value = nomeEstudante;
             if (elRgaInput) elRgaInput.value = rgaEstudante;
 
-            // Leitura normal das disciplinas a partir da 3ª linha
             const linhas = XLSX.utils.sheet_to_json(worksheet, { range: 2 });
             
             let somaCargaHorariaOBR = 0;
@@ -114,11 +184,6 @@ function processarHistorico(event) {
             if (elCH) elCH.value = somaCargaHorariaOBR;
             
             calcularSemestre();
-            
-            let msg = `Planilha processada!\n`;
-            if (nomeEstudante) msg += `${nomeEstudante}\n`;
-            msg += `Obrigatórias: ${somaCargaHorariaOBR}h | Optativas: ${somaCargaHorariaOPT}h.`;
-            alert(msg);
 
         } catch (err) {
             alert("Erro ao processar a planilha. Verifique o formato do arquivo.");
@@ -139,6 +204,7 @@ function calcularSemestre() {
     let cargaHorariaEstudante = parseInt(elCH.value);
 
     if (isNaN(cargaHorariaEstudante) || cargaHorariaEstudante < 0) {
+        resultado.style.display = "block";
         resultado.textContent = "Por favor, digite uma carga horária válida!";
         if (acoesPlano) acoesPlano.style.display = "none";
         return;
@@ -169,6 +235,7 @@ function calcularSemestre() {
     if (!semestreEnquadrado) semestreEnquadrado = "Formado (ou no último semestre)";
     
     window.ultimoEnquadramento = semestreEnquadrado;
+    resultado.style.display = "block";
     resultado.textContent = `O estudante está no ${semestreEnquadrado}`;
     
     if (acoesPlano) acoesPlano.style.display = "block";
