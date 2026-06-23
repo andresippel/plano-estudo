@@ -13,11 +13,13 @@
     </header>
 
     <main class="container">
+        <!-- Status do Sistema -->
         <div class="card status-card">
             <p id="cursoAtual">Carregando dados do curso...</p>
         </div>
 
-       <div class="card">
+        <!-- Identificação -->
+        <div class="card">
             <h3>Identificação do Acadêmico</h3>
             <p class="subtitle">Insira o RGA e o Nome separados por um hífen.</p>
             <div class="aluno-info">
@@ -25,6 +27,7 @@
             </div>
         </div>
 
+        <!-- Área Principal de Processamento -->
         <div class="card">
             <h3>Processamento de Histórico</h3>
             <p class="subtitle">Faça o upload do histórico (Excel/CSV) para extrair os dados automaticamente.</p>
@@ -38,29 +41,40 @@
             <div class="divider"><span>OU</span></div>
 
             <div class="manual-input">
-                <label for="cargaHoraria">Digite a Carga Horária Obrigatória Cursada manualmente:</label>
+                <label for="cargaHoraria">Carga Horária Obrigatória Cursada (Base):</label>
                 <div class="input-group">
                     <input type="number" id="cargaHoraria" placeholder="Ex: 1500" min="0">
-                    <button id="btnCalcular" class="btn-primary">Calcular Enquadramento</button>
                 </div>
             </div>
+        </div>
+
+        <!-- NOVA ÁREA: Aproveitamento de Estudos -->
+        <div class="card">
+            <h3>Aproveitamento de Estudos (Opcional)</h3>
+            <p class="subtitle">Selecione disciplinas da grade que o acadêmico obteve aproveitamento/dispensa e que <strong>não</strong> estão contabilizadas no Histórico acima.</p>
             
+            <div id="listaAproveitamento" class="checkbox-list">
+                <p style="color: #888; font-style: italic;">Carregando disciplinas...</p>
+            </div>
+
+            <button id="btnCalcular" class="btn-primary" style="margin-top: 20px; width: 100%;">Calcular Enquadramento Final</button>
             <p id="resultado" class="resultado-destaque"></p>
         </div>
 
+        <!-- Área do Plano de Estudos -->
         <div id="acoesPlano" class="card" style="display: none;">
             <h3>Plano de Estudos Gerado</h3>
             <p class="subtitle">Confira a prévia abaixo e escolha como deseja exportar o documento oficial.</p>
             
             <div class="button-group">
-                <button id="btnCopiarSEI" class="btn-info">Copiar Código para o SEI ( < > )</button>
+                <button id="btnCopiarSEI" class="btn-info">Copiar para colar no SEI ( < > )</button>
                 <button id="btnBaixarWord" class="btn-warning">Baixar documento do Word (.doc)</button>
             </div>
             
-            <div id="previewPlano" class="preview-box">
-                </div>
+            <div id="previewPlano" class="preview-box"></div>
         </div>
 
+        <!-- Administração da Grade -->
         <div class="card admin-card">
             <h3>Gerenciar Grade do Curso</h3>
             <p class="subtitle">Se necessário, importe a configuração de grade de outro curso.</p>
@@ -76,7 +90,7 @@
         </div>
     </main>
 
-    <footer></footer>
+    <footer>Criado por André Sippel - 2026</footer>
 
     <script src="main.js"></script>
     <script src="plano_estudos.js"></script>

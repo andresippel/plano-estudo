@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const btnCopiarSEI = document.getElementById('btnCopiarSEI');
     const btnBaixarWord = document.getElementById('btnBaixarWord');
-    const alunoInfo = document.getElementById('alunoInfo'); // Novo campo unificado
+    const alunoInfo = document.getElementById('alunoInfo'); 
 
     if (btnCopiarSEI) {
         btnCopiarSEI.addEventListener('click', function() {
@@ -46,10 +46,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Escuta mudanças apenas no campo unificado
     if (alunoInfo) {
         alunoInfo.addEventListener('input', window.atualizarPreviewDocumento);
     }
+    
+    // Se o usuário clicar nas checkboxes, a prévia atualiza na hora sem precisar clicar no botão Calcular de novo
+    document.getElementById('listaAproveitamento').addEventListener('change', function(e) {
+        if(e.target.classList.contains('chk-aproveitamento')) {
+            if (typeof calcularSemestre === "function") calcularSemestre();
+        }
+    });
 });
 
 window.atualizarPreviewDocumento = function() {
@@ -67,16 +73,12 @@ function gerarHTMLPlanoEstudos() {
     let nome = "Não informado";
     let rga = "Não informado";
 
-    // Inteligência de separação "RGA - Nome"
     if (infoStr !== "") {
         let separadorIndex = infoStr.indexOf(" - ");
         if (separadorIndex !== -1) {
-            // Pega tudo antes do hífen
             rga = infoStr.substring(0, separadorIndex).trim();
-            // Pega tudo depois do hífen
             nome = infoStr.substring(separadorIndex + 3).trim();
         } else {
-            // Se o usuário esqueceu o hífen, joga o texto todo no Nome como segurança
             nome = infoStr;
         }
     }
@@ -191,6 +193,11 @@ function gerarHTMLPlanoEstudos() {
     const totalCursada = window.chTotalCursada || 0;
     const aCursarTotal = Math.max(0, reqTotalCurso - totalCursada);
 
+    // Soma os aproveitamentos extraídos do Excel com os marcados manualmente nas caixas
+    const aproveitadasExcel = window.chAproveitamentosExcel || 0;
+    const aproveitadasManual = window.chAproveitadaManual || 0;
+    const totalAproveitadas = aproveitadasExcel + aproveitadasManual;
+
     html += `
 <p class="Texto_Alinhado_Esquerda">&nbsp;</p>
 <p class="Item_Nivel1" style="font-weight: bold;">3. CARGA HORÁRIA DE DISCIPLINAS OPTATIVAS NECESSÁRIAS:</p>
@@ -204,7 +211,7 @@ function gerarHTMLPlanoEstudos() {
 <p class="Texto_Justificado">&nbsp;</p>
 
 <p class="Item_Nivel1" style="font-weight: bold;">5. CARGA HORÁRIA DE DISCIPLINAS NECESSÁRIAS PARA A INTEGRALIZAÇÃO CURRICULAR:</p>
-<p class="Texto_Justificado">Carga horária total de disciplinas obrigatórias aproveitadas e dispensadas: 0 horas</p>
+<p class="Texto_Justificado">Carga horária total de disciplinas obrigatórias aproveitadas e dispensadas: ${totalAproveitadas} horas</p>
 <p class="Texto_Justificado">Carga horária total de disciplinas a cursar: ${aCursarTotal} horas</p>
 <p class="Texto_Justificado">Carga horaria total do plano de estudos: ${totalCursada} horas</p>
 `;

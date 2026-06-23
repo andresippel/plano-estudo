@@ -1,8 +1,11 @@
 window.dadosDoCurso = null;
+window.disciplinasAprovadasExcel = [];
 window.disciplinasAprovadas = [];
 window.disciplinasMatriculadas = [];
 window.chOptCursada = 0;
 window.chTotalCursada = 0;
+window.chAproveitamentosExcel = 0; 
+window.chAproveitadaManual = 0;    
 window.ultimoEnquadramento = "";
 window.nomeDoAlunoPlanilha = ""; 
 window.rgaDoAlunoPlanilha = "";  
@@ -15,7 +18,6 @@ function normalizarNome(nome) {
 function configurarDragAndDrop(idDropZone, idInput) {
     const dropZone = document.getElementById(idDropZone);
     const inputElement = document.getElementById(idInput);
-
     if (!dropZone || !inputElement) return;
 
     dropZone.addEventListener('dragover', (e) => {
@@ -53,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
         inputImportar.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -74,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnExportar) {
         btnExportar.addEventListener('click', function() {
             if (!window.dadosDoCurso) {
-                alert("Não há dados para exportar!");
-                return;
+                alert("Não há dados para exportar!"); return;
             }
             const textoJSON = JSON.stringify(window.dadosDoCurso, null, 2);
             const blob = new Blob([textoJSON], { type: "application/json" });
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('gradeCurso_v3', JSON.stringify(data));
                 atualizarInterfaceCurso();
             })
-            .catch(error => console.error("Erro ao carregar o JSON do curso:", error));
+            .catch(error => console.error("Erro ao carregar o JSON:", error));
     }
 });
 
@@ -111,6 +111,45 @@ function atualizarInterfaceCurso() {
     if (el && window.dadosDoCurso && window.dadosDoCurso.curso) {
         el.textContent = `Grade Ativa: ${window.dadosDoCurso.curso}`;
     }
+    renderizarListaAproveitamento();
+}
+
+// ---------------------------------------------------
+// LISTA DE APROVEITAMENTO INTELIGENTE (FILTRADA)
+// ---------------------------------------------------
+function renderizarListaAproveitamento() {
+    const container = document.getElementById('listaAproveitamento');
+    if (!container || !window.dadosDoCurso) return;
+    
+    let html = '';
+    let temDisciplinaDisponivel = false;
+
+    window.dadosDoCurso.semestres.forEach(sem => {
+        // Filtra para mostrar APENAS as disciplinas que ainda não estão no Histórico (Excel)
+        let disciplinasDisponiveis = sem.disciplinas.filter(d => {
+            return !window.disciplinasAprovadasExcel.includes(normalizarNome(d.nome));
+        });
+
+        if (disciplinasDisponiveis.length > 0) {
+            temDisciplinaDisponivel = true;
+            html += `<div class="semester-group">${sem.numero}º Semestre</div>`;
+            disciplinasDisponiveis.forEach(d => {
+                const id = `chk_${normalizarNome(d.nome).replace(/[^a-zA-Z0-9]/g, '_')}`;
+                html += `
+                <label class="checkbox-item" for="${id}">
+                    <input type="checkbox" id="${id}" class="chk-aproveitamento" value="${d.nome}" data-ch="${d.ch}">
+                    ${d.nome} (${d.ch}h)
+                </label>`;
+            });
+        }
+    });
+
+    // Se o aluno já fez tudo do curso e não tem nada para aproveitar
+    if (!temDisciplinaDisponivel) {
+        html = '<p style="color: #888; font-style: italic;">Todas as disciplinas já constam no histórico como cursadas/aproveitadas.</p>';
+    }
+
+    container.innerHTML = html;
 }
 
 function processarHistorico(event) {
@@ -125,14 +164,12 @@ function processarHistorico(event) {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
             const matrizRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            
             const nomeEstudante = matrizRaw[0] && matrizRaw[0][0] ? String(matrizRaw[0][0]).trim() : "";
             const rgaEstudante = matrizRaw[1] && matrizRaw[1][0] ? String(matrizRaw[1][0]).trim() : "";
 
             window.nomeDoAlunoPlanilha = nomeEstudante;
             window.rgaDoAlunoPlanilha = rgaEstudante;
 
-            // Insere os dados unidos no novo campo único na tela
             const elAlunoInfo = document.getElementById('alunoInfo');
             if (elAlunoInfo) {
                 if (rgaEstudante && nomeEstudante) {
@@ -148,7 +185,10 @@ function processarHistorico(event) {
             
             let somaCargaHorariaOBR = 0;
             let somaCargaHorariaOPT = 0;
-            window.disciplinasAprovadas = []; 
+            let somaAproveitamentosExcel = 0;
+            
+            // Zera as matrizes globais para processar a nova planilha
+            window.disciplinasAprovadasExcel = []; 
             window.disciplinasMatriculadas = [];
 
             linhas.forEach(linha => {
@@ -163,7 +203,8 @@ function processarHistorico(event) {
                 const strTipo = String(tipo).trim().toUpperCase();
                 const strSituacao = String(situacao).trim().toUpperCase();
 
-                const aprovado = strSituacao === "APROVADO" || strSituacao === "APROVEITADA POR EQUIVALÊNCIA" || strSituacao === "DISPENSADO DE CURSAR" || strSituacao.startsWith("APR") || strSituacao.startsWith("DISP");
+                const dispensado = strSituacao === "APROVEITADA POR EQUIVALÊNCIA" || strSituacao === "DISPENSA";
+                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || dispensado;
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
 
                 if (matriculado) {
@@ -173,7 +214,8 @@ function processarHistorico(event) {
                 if (aprovado && !isNaN(cargaHoraria)) {
                     if (strTipo === "OBR" || strTipo.includes("OBR")) {
                         somaCargaHorariaOBR += cargaHoraria;
-                        window.disciplinasAprovadas.push(normalizarNome(nomeDisciplina));
+                        window.disciplinasAprovadasExcel.push(normalizarNome(nomeDisciplina));
+                        if (dispensado) somaAproveitamentosExcel += cargaHoraria;
                     } else if (strTipo === "OPT" || strTipo.includes("OPT")) {
                         somaCargaHorariaOPT += cargaHoraria;
                     }
@@ -181,12 +223,18 @@ function processarHistorico(event) {
             });
 
             window.chOptCursada = somaCargaHorariaOPT;
-            window.chTotalCursada = somaCargaHorariaOBR + somaCargaHorariaOPT;
+            window.chAproveitamentosExcel = somaAproveitamentosExcel;
 
             const elCH = document.getElementById('cargaHoraria');
             if (elCH) elCH.value = somaCargaHorariaOBR;
             
+            // RE-RENDERIZA A LISTA para ocultar o que ele acabou de ler da planilha
+            renderizarListaAproveitamento();
+            
+            // Já calcula e gera o preview após o upload
             calcularSemestre();
+            
+            alert(`Histórico processado! Obrigatórias: ${somaCargaHorariaOBR}h | Optativas: ${somaCargaHorariaOPT}h.`);
 
         } catch (err) {
             alert("Erro ao processar a planilha. Verifique o formato do arquivo.");
@@ -201,14 +249,33 @@ function calcularSemestre() {
     const elCH = document.getElementById("cargaHoraria");
     const resultado = document.getElementById("resultado");
     const acoesPlano = document.getElementById('acoesPlano');
-    
     if (!elCH || !resultado) return;
 
-    let cargaHorariaEstudante = parseInt(elCH.value);
+    let chBaseEstudante = parseInt(elCH.value) || 0;
 
-    if (isNaN(cargaHorariaEstudante) || cargaHorariaEstudante < 0) {
+    // 1. Processa os Aproveitamentos Manuais (Checkboxes que restaram visíveis)
+    let chAproveitadaCheckbox = 0;
+    let disciplinasAproveitadasCheck = [];
+    
+    document.querySelectorAll('.chk-aproveitamento:checked').forEach(chk => {
+        chAproveitadaCheckbox += parseInt(chk.getAttribute('data-ch')) || 0;
+        disciplinasAproveitadasCheck.push(normalizarNome(chk.value));
+    });
+
+    window.chAproveitadaManual = chAproveitadaCheckbox;
+    
+    // Mescla as disciplinas do Excel com as marcadas manualmente
+    window.disciplinasAprovadas = [...window.disciplinasAprovadasExcel, ...disciplinasAproveitadasCheck];
+
+    // O Enquadramento soma o Histórico + Aproveitamento Manual
+    let cargaHorariaEstudanteFinal = chBaseEstudante + chAproveitadaCheckbox;
+    
+    // Calcula o total global cursado (incluindo optativas) para o Item 5 do Plano
+    window.chTotalCursada = cargaHorariaEstudanteFinal + window.chOptCursada;
+
+    if (isNaN(cargaHorariaEstudanteFinal) || cargaHorariaEstudanteFinal < 0) {
         resultado.style.display = "block";
-        resultado.textContent = "Por favor, digite uma carga horária válida!";
+        resultado.textContent = "Por favor, defina uma carga horária válida.";
         if (acoesPlano) acoesPlano.style.display = "none";
         return;
     }
@@ -223,8 +290,8 @@ function calcularSemestre() {
         let chTotalSemestre = semestre.disciplinas.reduce((soma, disciplina) => soma + disciplina.ch, 0);
         chAcumulada += chTotalSemestre;
 
-        if (chAcumulada > cargaHorariaEstudante) {
-            let diferenca = chAcumulada - cargaHorariaEstudante;
+        if (chAcumulada > cargaHorariaEstudanteFinal) {
+            let diferenca = chAcumulada - cargaHorariaEstudanteFinal;
             if (diferenca <= 136) {
                 let proximoSemestre = Math.min(i + 2, window.dadosDoCurso.semestres.length);
                 semestreEnquadrado = `${proximoSemestre}º semestre`;
@@ -239,7 +306,7 @@ function calcularSemestre() {
     
     window.ultimoEnquadramento = semestreEnquadrado;
     resultado.style.display = "block";
-    resultado.textContent = `O estudante está no ${semestreEnquadrado}`;
+    resultado.textContent = `O estudante está no ${semestreEnquadrado} (CH Analisada: ${cargaHorariaEstudanteFinal}h)`;
     
     if (acoesPlano) acoesPlano.style.display = "block";
     if (typeof window.atualizarPreviewDocumento === "function") {
