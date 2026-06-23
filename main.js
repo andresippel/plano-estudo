@@ -3,13 +3,11 @@ window.disciplinasAprovadasExcel = [];
 window.disciplinasAprovadas = [];
 window.disciplinasMatriculadas = [];
 window.chOptCursada = 0;
-window.chNfcCursada = 0; // Nova variável para o Núcleo de Formação Cidadã
+window.chNfcCursada = 0; 
 window.chTotalCursada = 0;
 window.chAproveitamentosExcel = 0; 
 window.chAproveitadaManual = 0;    
 window.ultimoEnquadramento = "";
-window.nomeDoAlunoPlanilha = ""; 
-window.rgaDoAlunoPlanilha = "";  
 
 function normalizarNome(nome) {
     if (!nome) return "";
@@ -152,6 +150,12 @@ function processarHistorico(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    // CAPTURA INTELIGENTE DO NOME DO ARQUIVO
+    // 1. Remove a extensão (ex: .xlsx, .csv)
+    let nomeArquivo = file.name.replace(/\.[^/.]+$/, "").trim();
+    // 2. Limpa prefixos genéricos que sistemas costumam colocar (opcional, para deixar o campo mais limpo)
+    nomeArquivo = nomeArquivo.replace(/^(hist[óo]rico\s*escolar|hist[óo]rico)[_-\s]*/i, "").trim();
+
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -160,20 +164,22 @@ function processarHistorico(event) {
             const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
             const matrizRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            const nomeEstudante = matrizRaw[0] && matrizRaw[0][0] ? String(matrizRaw[0][0]).trim() : "";
-            const rgaEstudante = matrizRaw[1] && matrizRaw[1][0] ? String(matrizRaw[1][0]).trim() : "";
-
-            window.nomeDoAlunoPlanilha = nomeEstudante;
-            window.rgaDoAlunoPlanilha = rgaEstudante;
+            const nomeEstudantePlanilha = matrizRaw[0] && matrizRaw[0][0] ? String(matrizRaw[0][0]).trim() : "";
+            const rgaEstudantePlanilha = matrizRaw[1] && matrizRaw[1][0] ? String(matrizRaw[1][0]).trim() : "";
 
             const elAlunoInfo = document.getElementById('alunoInfo');
             if (elAlunoInfo) {
-                if (rgaEstudante && nomeEstudante) {
-                    elAlunoInfo.value = `${rgaEstudante} - ${nomeEstudante}`;
-                } else if (nomeEstudante) {
-                    elAlunoInfo.value = nomeEstudante;
-                } else if (rgaEstudante) {
-                    elAlunoInfo.value = rgaEstudante;
+                // PRIORIDADE 1: Usa o nome do arquivo se ele tiver dados (ex: "2023.3292... - André")
+                if (nomeArquivo && nomeArquivo.length > 5 && nomeArquivo.toLowerCase() !== "pasta1") {
+                    elAlunoInfo.value = nomeArquivo;
+                } 
+                // PRIORIDADE 2 (Fallback): Lê as células A1 e A2 de dentro do Excel
+                else if (rgaEstudantePlanilha && nomeEstudantePlanilha) {
+                    elAlunoInfo.value = `${rgaEstudantePlanilha} - ${nomeEstudantePlanilha}`;
+                } else if (nomeEstudantePlanilha) {
+                    elAlunoInfo.value = nomeEstudantePlanilha;
+                } else if (rgaEstudantePlanilha) {
+                    elAlunoInfo.value = rgaEstudantePlanilha;
                 }
             }
 
@@ -199,7 +205,6 @@ function processarHistorico(event) {
                 const strTipo = String(tipo).trim().toUpperCase();
                 const strSituacao = String(situacao).trim().toUpperCase();
 
-                // Identifica se a disciplina foi dispensada (cobre "Dispensado por Análise de Currículo" e "Aproveitada...")
                 const dispensado = strSituacao.includes("APROVEITAD") || strSituacao.includes("DISPENSA") || strSituacao.startsWith("DISP");
                 const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || dispensado;
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
@@ -264,7 +269,6 @@ function calcularSemestre() {
 
     let cargaHorariaEstudanteFinal = chBaseEstudante + chAproveitadaCheckbox;
     
-    // Total cursado final agora inclui as OBR, OPT e NFC
     window.chTotalCursada = cargaHorariaEstudanteFinal + window.chOptCursada + window.chNfcCursada;
 
     if (isNaN(cargaHorariaEstudanteFinal) || cargaHorariaEstudanteFinal < 0) {
