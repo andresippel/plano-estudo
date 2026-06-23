@@ -92,7 +92,8 @@ function gerarHTMLPlanoEstudos() {
 <p class="Texto_Justificado">&nbsp;</p>
 
 <p class="Item_Nivel1" style="font-weight: bold;">Plano de estudos das disciplinas:</p>
-<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:100%;" border="1" cellpadding="5">
+<!-- TABELA 1: Largura travada em 85% para alinhar com os textos do SEI -->
+<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:85%;" border="1" cellpadding="5">
     <thead>
         <tr>
             <th style="background-color:#cccccc;"><p class="Tabela_Texto_Centralizado">Disciplinas a serem cursadas no semestre atual</p></th>
@@ -118,7 +119,8 @@ function gerarHTMLPlanoEstudos() {
 </table>
 <p class="Texto_Alinhado_Esquerda">&nbsp;</p>
 
-<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:100%;" border="1" cellpadding="5">
+<!-- TABELA 2: Largura travada em 85% para alinhar com os textos do SEI -->
+<table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:85%;" border="1" cellpadding="5">
     <thead>
         <tr>
             <th style="background-color:#cccccc;width:60%;"><p class="Tabela_Texto_Centralizado">Disciplina a serem cursadas em semestres posteriores</p></th>
@@ -213,6 +215,10 @@ function gerarHTMLPlanoEstudos() {
 <p class="Texto_Justificado">Carga horária total de disciplinas obrigatórias aproveitadas e dispensadas: ${totalAproveitadas} horas</p>
 <p class="Texto_Justificado">Carga horária total de disciplinas a cursar: ${aCursarTotal} horas</p>
 <p class="Texto_Justificado">Carga horaria total do plano de estudos: ${grandTotalCH} horas</p>
+
+<p class="Texto_Justificado">&nbsp;</p>
+<p class="Texto_Justificado">&nbsp;</p>
+<p class="Texto_Justificado">&nbsp;</p>
 `;
 
     return html;
