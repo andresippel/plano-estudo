@@ -96,8 +96,8 @@ function gerarHTMLPlanoEstudos() {
 <table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:85%;" border="1" cellpadding="5">
     <thead>
         <tr>
-            <th style="background-color:#cccccc;"><p class="Tabela_Texto_Centralizado">Disciplinas a serem cursadas no semestre atual</p></th>
-            <th style="background-color:#cccccc;"><p class="Tabela_Texto_Centralizado">Indicação da turma prática</p></th>
+            <th style="background-color:#cccccc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;"><p class="Tabela_Texto_Centralizado">Disciplinas a serem cursadas no semestre atual</p></th>
+            <th style="background-color:#cccccc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;"><p class="Tabela_Texto_Centralizado">Indicação da turma prática</p></th>
         </tr>
     </thead>
     <tbody>`;
@@ -123,9 +123,9 @@ function gerarHTMLPlanoEstudos() {
 <table class="table" style="border-collapse:collapse;margin-left:auto;margin-right:auto;width:85%;" border="1" cellpadding="5">
     <thead>
         <tr>
-            <th style="background-color:#cccccc;width:60%;"><p class="Tabela_Texto_Centralizado">Disciplina a serem cursadas em semestres posteriores</p></th>
-            <th style="background-color:#cccccc;width:20%;"><p class="Tabela_Texto_Centralizado">Indicação do Semestre:</p></th>
-            <th style="background-color:#cccccc;width:20%;"><p class="Tabela_Texto_Centralizado">Carga horária</p></th>
+            <th style="background-color:#cccccc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; width:60%;"><p class="Tabela_Texto_Centralizado">Disciplina a serem cursadas em semestres posteriores</p></th>
+            <th style="background-color:#cccccc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; width:20%;"><p class="Tabela_Texto_Centralizado">Indicação do Semestre:</p></th>
+            <th style="background-color:#cccccc !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; width:20%;"><p class="Tabela_Texto_Centralizado">Carga horária</p></th>
         </tr>
     </thead>
     <tbody>`;
