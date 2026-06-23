@@ -1,12 +1,11 @@
 // ---------------------------------------------------
-// MÓDULO: GERAÇÃO DO PLANO DE ESTUDOS COM VARIÁVEIS DE SEGURANÇA
+// MÓDULO: GERAÇÃO DO PLANO DE ESTUDOS
 // ---------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', function() {
     const btnCopiarSEI = document.getElementById('btnCopiarSEI');
     const btnBaixarWord = document.getElementById('btnBaixarWord');
-    const nomeAluno = document.getElementById('nomeAluno');
-    const rgaAluno = document.getElementById('rgaAluno');
+    const alunoInfo = document.getElementById('alunoInfo'); // Novo campo unificado
 
     if (btnCopiarSEI) {
         btnCopiarSEI.addEventListener('click', function() {
@@ -47,17 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (nomeAluno) {
-        nomeAluno.addEventListener('input', function() {
-            window.nomeDoAlunoPlanilha = nomeAluno.value;
-            window.atualizarPreviewDocumento();
-        });
-    }
-    if (rgaAluno) {
-        rgaAluno.addEventListener('input', function() {
-            window.rgaDoAlunoPlanilha = rgaAluno.value;
-            window.atualizarPreviewDocumento();
-        });
+    // Escuta mudanças apenas no campo unificado
+    if (alunoInfo) {
+        alunoInfo.addEventListener('input', window.atualizarPreviewDocumento);
     }
 });
 
@@ -70,9 +61,26 @@ window.atualizarPreviewDocumento = function() {
 };
 
 function gerarHTMLPlanoEstudos() {
-    // Busca prioritariamente a variável global extraída da matriz da planilha
-    const nome = window.nomeDoAlunoPlanilha || "Não informado";
-    const rga = window.rgaDoAlunoPlanilha || "Não informado";
+    const elAlunoInfo = document.getElementById('alunoInfo');
+    let infoStr = elAlunoInfo ? elAlunoInfo.value.trim() : "";
+    
+    let nome = "Não informado";
+    let rga = "Não informado";
+
+    // Inteligência de separação "RGA - Nome"
+    if (infoStr !== "") {
+        let separadorIndex = infoStr.indexOf(" - ");
+        if (separadorIndex !== -1) {
+            // Pega tudo antes do hífen
+            rga = infoStr.substring(0, separadorIndex).trim();
+            // Pega tudo depois do hífen
+            nome = infoStr.substring(separadorIndex + 3).trim();
+        } else {
+            // Se o usuário esqueceu o hífen, joga o texto todo no Nome como segurança
+            nome = infoStr;
+        }
+    }
+
     const enquadramento = window.ultimoEnquadramento || "Não calculado";
 
     let html = `
@@ -92,7 +100,7 @@ function gerarHTMLPlanoEstudos() {
     </thead>
     <tbody>`;
 
-    if (window.workspace = window.disciplinasMatriculadas && window.disciplinasMatriculadas.length > 0) {
+    if (window.disciplinasMatriculadas && window.disciplinasMatriculadas.length > 0) {
         window.disciplinasMatriculadas.forEach(d => {
             html += `<tr><td><p class="Tabela_Texto_Alinhado_Esquerda">${d.nome}</p></td><td><p class="Tabela_Texto_Centralizado">&nbsp;</p></td></tr>`;
         });
@@ -173,9 +181,6 @@ function gerarHTMLPlanoEstudos() {
     </tbody>
 </table>`;
 
-// --- CÁLCULO DOS ITENS DE RESUMO (3, 4 E 5) DINÂMICOS ---
-    
-    // Puxa as exigências do JSON. Se o curso esquecer de colocar no JSON, usa Odonto como padrão por segurança.
     const reqOptativas = (window.dadosDoCurso && window.dadosDoCurso.ch_optativas_exigidas) ? window.dadosDoCurso.ch_optativas_exigidas : 60;
     const reqExtensao = (window.dadosDoCurso && window.dadosDoCurso.ch_extensao_exigida) ? window.dadosDoCurso.ch_extensao_exigida : 409;
     const reqTotalCurso = (window.dadosDoCurso && window.dadosDoCurso.ch_total_curso) ? window.dadosDoCurso.ch_total_curso : 4090;

@@ -12,14 +12,12 @@ function normalizarNome(nome) {
     return String(nome).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 }
 
-// Configura o visual e a captura de arquivos arrastados
 function configurarDragAndDrop(idDropZone, idInput) {
     const dropZone = document.getElementById(idDropZone);
     const inputElement = document.getElementById(idInput);
 
     if (!dropZone || !inputElement) return;
 
-    // Efeitos visuais ao passar o mouse com o arquivo
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('dragover');
@@ -29,13 +27,12 @@ function configurarDragAndDrop(idDropZone, idInput) {
         dropZone.addEventListener(type, () => dropZone.classList.remove('dragover'));
     });
 
-    // Captura o arquivo quando ele é solto na área
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
         if (e.dataTransfer.files.length) {
             inputElement.files = e.dataTransfer.files;
-            inputElement.dispatchEvent(new Event('change')); // Aciona o processamento
+            inputElement.dispatchEvent(new Event('change')); 
         }
     });
 }
@@ -46,7 +43,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputImportar = document.getElementById('inputImportar');
     const btnExportar = document.getElementById('btnExportar');
 
-    // Inicializa as zonas de arrastar
     configurarDragAndDrop('dropZoneHistorico', 'inputHistorico');
     configurarDragAndDrop('dropZoneImportar', 'inputImportar');
 
@@ -136,10 +132,17 @@ function processarHistorico(event) {
             window.nomeDoAlunoPlanilha = nomeEstudante;
             window.rgaDoAlunoPlanilha = rgaEstudante;
 
-            const elNomeInput = document.getElementById('nomeAluno');
-            const elRgaInput = document.getElementById('rgaAluno');
-            if (elNomeInput) elNomeInput.value = nomeEstudante;
-            if (elRgaInput) elRgaInput.value = rgaEstudante;
+            // Insere os dados unidos no novo campo único na tela
+            const elAlunoInfo = document.getElementById('alunoInfo');
+            if (elAlunoInfo) {
+                if (rgaEstudante && nomeEstudante) {
+                    elAlunoInfo.value = `${rgaEstudante} - ${nomeEstudante}`;
+                } else if (nomeEstudante) {
+                    elAlunoInfo.value = nomeEstudante;
+                } else if (rgaEstudante) {
+                    elAlunoInfo.value = rgaEstudante;
+                }
+            }
 
             const linhas = XLSX.utils.sheet_to_json(worksheet, { range: 2 });
             
