@@ -188,12 +188,12 @@ button {
 }
 
 .btn-warning {
-    background-color: #ffc107;
+    background-color: #00c0ef ;
     color: #212529;
 }
 
 .btn-warning:hover {
-    background-color: #e0a800;
+    background-color: #0aa8cf;
 }
 
 .btn-outline {
