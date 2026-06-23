@@ -3,6 +3,7 @@ window.disciplinasAprovadasExcel = [];
 window.disciplinasAprovadas = [];
 window.disciplinasMatriculadas = [];
 window.chOptCursada = 0;
+window.chNfcCursada = 0; // Nova variável para o Núcleo de Formação Cidadã
 window.chTotalCursada = 0;
 window.chAproveitamentosExcel = 0; 
 window.chAproveitadaManual = 0;    
@@ -114,9 +115,6 @@ function atualizarInterfaceCurso() {
     renderizarListaAproveitamento();
 }
 
-// ---------------------------------------------------
-// LISTA DE APROVEITAMENTO INTELIGENTE (FILTRADA)
-// ---------------------------------------------------
 function renderizarListaAproveitamento() {
     const container = document.getElementById('listaAproveitamento');
     if (!container || !window.dadosDoCurso) return;
@@ -125,7 +123,6 @@ function renderizarListaAproveitamento() {
     let temDisciplinaDisponivel = false;
 
     window.dadosDoCurso.semestres.forEach(sem => {
-        // Filtra para mostrar APENAS as disciplinas que ainda não estão no Histórico (Excel)
         let disciplinasDisponiveis = sem.disciplinas.filter(d => {
             return !window.disciplinasAprovadasExcel.includes(normalizarNome(d.nome));
         });
@@ -144,7 +141,6 @@ function renderizarListaAproveitamento() {
         }
     });
 
-    // Se o aluno já fez tudo do curso e não tem nada para aproveitar
     if (!temDisciplinaDisponivel) {
         html = '<p style="color: #888; font-style: italic;">Todas as disciplinas já constam no histórico como cursadas/aproveitadas.</p>';
     }
@@ -185,9 +181,9 @@ function processarHistorico(event) {
             
             let somaCargaHorariaOBR = 0;
             let somaCargaHorariaOPT = 0;
+            let somaCargaHorariaNFC = 0;
             let somaAproveitamentosExcel = 0;
             
-            // Zera as matrizes globais para processar a nova planilha
             window.disciplinasAprovadasExcel = []; 
             window.disciplinasMatriculadas = [];
 
@@ -203,7 +199,8 @@ function processarHistorico(event) {
                 const strTipo = String(tipo).trim().toUpperCase();
                 const strSituacao = String(situacao).trim().toUpperCase();
 
-                const dispensado = strSituacao === "APROVEITADA POR EQUIVALÊNCIA" || strSituacao === "DISPENSA";
+                // Identifica se a disciplina foi dispensada (cobre "Dispensado por Análise de Currículo" e "Aproveitada...")
+                const dispensado = strSituacao.includes("APROVEITAD") || strSituacao.includes("DISPENSA") || strSituacao.startsWith("DISP");
                 const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || dispensado;
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
 
@@ -218,20 +215,20 @@ function processarHistorico(event) {
                         if (dispensado) somaAproveitamentosExcel += cargaHoraria;
                     } else if (strTipo === "OPT" || strTipo.includes("OPT")) {
                         somaCargaHorariaOPT += cargaHoraria;
+                    } else if (strTipo === "NFC" || strTipo.includes("NFC")) {
+                        somaCargaHorariaNFC += cargaHoraria;
                     }
                 }
             });
 
             window.chOptCursada = somaCargaHorariaOPT;
+            window.chNfcCursada = somaCargaHorariaNFC;
             window.chAproveitamentosExcel = somaAproveitamentosExcel;
 
             const elCH = document.getElementById('cargaHoraria');
             if (elCH) elCH.value = somaCargaHorariaOBR;
             
-            // RE-RENDERIZA A LISTA para ocultar o que ele acabou de ler da planilha
             renderizarListaAproveitamento();
-            
-            // Já calcula e gera o preview após o upload
             calcularSemestre();
             
             alert(`Histórico processado! Obrigatórias: ${somaCargaHorariaOBR}h | Optativas: ${somaCargaHorariaOPT}h.`);
@@ -253,7 +250,6 @@ function calcularSemestre() {
 
     let chBaseEstudante = parseInt(elCH.value) || 0;
 
-    // 1. Processa os Aproveitamentos Manuais (Checkboxes que restaram visíveis)
     let chAproveitadaCheckbox = 0;
     let disciplinasAproveitadasCheck = [];
     
@@ -264,14 +260,12 @@ function calcularSemestre() {
 
     window.chAproveitadaManual = chAproveitadaCheckbox;
     
-    // Mescla as disciplinas do Excel com as marcadas manualmente
     window.disciplinasAprovadas = [...window.disciplinasAprovadasExcel, ...disciplinasAproveitadasCheck];
 
-    // O Enquadramento soma o Histórico + Aproveitamento Manual
     let cargaHorariaEstudanteFinal = chBaseEstudante + chAproveitadaCheckbox;
     
-    // Calcula o total global cursado (incluindo optativas) para o Item 5 do Plano
-    window.chTotalCursada = cargaHorariaEstudanteFinal + window.chOptCursada;
+    // Total cursado final agora inclui as OBR, OPT e NFC
+    window.chTotalCursada = cargaHorariaEstudanteFinal + window.chOptCursada + window.chNfcCursada;
 
     if (isNaN(cargaHorariaEstudanteFinal) || cargaHorariaEstudanteFinal < 0) {
         resultado.style.display = "block";

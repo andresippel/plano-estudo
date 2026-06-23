@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
         alunoInfo.addEventListener('input', window.atualizarPreviewDocumento);
     }
     
-    // Se o usuário clicar nas checkboxes, a prévia atualiza na hora sem precisar clicar no botão Calcular de novo
     document.getElementById('listaAproveitamento').addEventListener('change', function(e) {
         if(e.target.classList.contains('chk-aproveitamento')) {
             if (typeof calcularSemestre === "function") calcularSemestre();
@@ -190,10 +189,10 @@ function gerarHTMLPlanoEstudos() {
     const optCursada = window.chOptCursada || 0;
     const optACursar = Math.max(0, reqOptativas - optCursada);
     
+    // Cálculo rigoroso com as variáveis passadas pelo main.js
     const totalCursada = window.chTotalCursada || 0;
     const aCursarTotal = Math.max(0, reqTotalCurso - totalCursada);
 
-    // Soma os aproveitamentos extraídos do Excel com os marcados manualmente nas caixas
     const aproveitadasExcel = window.chAproveitamentosExcel || 0;
     const aproveitadasManual = window.chAproveitadaManual || 0;
     const totalAproveitadas = aproveitadasExcel + aproveitadasManual;
@@ -213,7 +212,7 @@ function gerarHTMLPlanoEstudos() {
 <p class="Item_Nivel1" style="font-weight: bold;">5. CARGA HORÁRIA DE DISCIPLINAS NECESSÁRIAS PARA A INTEGRALIZAÇÃO CURRICULAR:</p>
 <p class="Texto_Justificado">Carga horária total de disciplinas obrigatórias aproveitadas e dispensadas: ${totalAproveitadas} horas</p>
 <p class="Texto_Justificado">Carga horária total de disciplinas a cursar: ${aCursarTotal} horas</p>
-<p class="Texto_Justificado">Carga horaria total do plano de estudos: ${totalCursada} horas</p>
+<p class="Texto_Justificado">Carga horaria total do plano de estudos: ${grandTotalCH} horas</p>
 `;
 
     return html;
