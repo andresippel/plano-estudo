@@ -160,7 +160,7 @@ function processarHistorico(event) {
                 const strTipo = String(tipo).trim().toUpperCase();
                 const strSituacao = String(situacao).trim().toUpperCase();
 
-                const aprovado = strSituacao === "APROVADO" || strSituacao === "APROVEITADA POR EQUIVALÊNCIA" || strSituacao === "DISPENSA" || strSituacao.startsWith("APR");
+                const aprovado = strSituacao === "APROVADO" || strSituacao === "APROVEITADA POR EQUIVALÊNCIA" || strSituacao === "DISPENSADO DE CURSAR" || strSituacao.startsWith("APR") || strSituacao.startsWith("DISP");
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
 
                 if (matriculado) {
