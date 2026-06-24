@@ -8,6 +8,9 @@ window.chTotalCursada = 0;
 window.chAproveitamentosExcel = 0; 
 window.chAproveitadaManual = 0;    
 window.ultimoEnquadramento = "";
+window.nomeDoAlunoPlanilha = ""; 
+window.rgaDoAlunoPlanilha = "";  
+window.nomeArquivoOriginal = ""; // Variável que memoriza o nome do upload
 
 function normalizarNome(nome) {
     if (!nome) return "";
@@ -150,11 +153,11 @@ function processarHistorico(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // CAPTURA INTELIGENTE DO NOME DO ARQUIVO
-    // 1. Remove a extensão (ex: .xlsx, .csv)
-    let nomeArquivo = file.name.replace(/\.[^/.]+$/, "").trim();
-    // 2. Limpa prefixos genéricos que sistemas costumam colocar (opcional, para deixar o campo mais limpo)
-    nomeArquivo = nomeArquivo.replace(/^(hist[óo]rico\s*escolar|hist[óo]rico)[_-\s]*/i, "").trim();
+    // Remove a extensão (ex: .xlsx) e guarda o nome original intacto
+    window.nomeArquivoOriginal = file.name.replace(/\.[^/.]+$/, "").trim();
+    
+    // Versão limpa apenas para o campo da tela (remove a palavra 'historico' se houver)
+    let nomeLimpoTela = window.nomeArquivoOriginal.replace(/^(hist[óo]rico\s*escolar|hist[óo]rico)[_-\s]*/i, "").trim();
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -167,14 +170,14 @@ function processarHistorico(event) {
             const nomeEstudantePlanilha = matrizRaw[0] && matrizRaw[0][0] ? String(matrizRaw[0][0]).trim() : "";
             const rgaEstudantePlanilha = matrizRaw[1] && matrizRaw[1][0] ? String(matrizRaw[1][0]).trim() : "";
 
+            window.nomeDoAlunoPlanilha = nomeEstudantePlanilha;
+            window.rgaDoAlunoPlanilha = rgaEstudantePlanilha;
+
             const elAlunoInfo = document.getElementById('alunoInfo');
             if (elAlunoInfo) {
-                // PRIORIDADE 1: Usa o nome do arquivo se ele tiver dados (ex: "2023.3292... - André")
-                if (nomeArquivo && nomeArquivo.length > 5 && nomeArquivo.toLowerCase() !== "pasta1") {
-                    elAlunoInfo.value = nomeArquivo;
-                } 
-                // PRIORIDADE 2 (Fallback): Lê as células A1 e A2 de dentro do Excel
-                else if (rgaEstudantePlanilha && nomeEstudantePlanilha) {
+                if (nomeLimpoTela && nomeLimpoTela.length > 5 && nomeLimpoTela.toLowerCase() !== "pasta1") {
+                    elAlunoInfo.value = nomeLimpoTela;
+                } else if (rgaEstudantePlanilha && nomeEstudantePlanilha) {
                     elAlunoInfo.value = `${rgaEstudantePlanilha} - ${nomeEstudantePlanilha}`;
                 } else if (nomeEstudantePlanilha) {
                     elAlunoInfo.value = nomeEstudantePlanilha;
