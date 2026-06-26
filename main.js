@@ -10,7 +10,7 @@ window.chAproveitadaManual = 0;
 window.ultimoEnquadramento = "";
 window.nomeDoAlunoPlanilha = ""; 
 window.rgaDoAlunoPlanilha = "";  
-window.nomeArquivoOriginal = ""; // Variável que memoriza o nome do upload
+window.nomeArquivoOriginal = ""; 
 
 function normalizarNome(nome) {
     if (!nome) return "";
@@ -153,10 +153,7 @@ function processarHistorico(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Remove a extensão (ex: .xlsx) e guarda o nome original intacto
     window.nomeArquivoOriginal = file.name.replace(/\.[^/.]+$/, "").trim();
-    
-    // Versão limpa apenas para o campo da tela (remove a palavra 'historico' se houver)
     let nomeLimpoTela = window.nomeArquivoOriginal.replace(/^(hist[óo]rico\s*escolar|hist[óo]rico)[_-\s]*/i, "").trim();
 
     const reader = new FileReader();
@@ -207,9 +204,15 @@ function processarHistorico(event) {
                 const cargaHoraria = parseFloat(chStr);
                 const strTipo = String(tipo).trim().toUpperCase();
                 const strSituacao = String(situacao).trim().toUpperCase();
+                
+                // Remove acentos para padronizar e evitar erros de digitação no sistema original
+                const situacaoLimpa = strSituacao.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-                const dispensado = strSituacao.includes("APROVEITAD") || strSituacao.includes("DISPENSA") || strSituacao.startsWith("DISP");
-                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || dispensado;
+                // REGRA ESTRITA: Soma no Item 5 APENAS se for exatamente a análise de currículo
+                const dispensadoItem5 = situacaoLimpa.includes("DISPENSADO POR ANALISE DE CURRICULO");
+                
+                // Regra geral para saber se a disciplina já foi feita de alguma forma (para não repetir no plano)
+                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || situacaoLimpa.includes("DISPENSA") || situacaoLimpa.includes("EQUIVALENCIA");
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
 
                 if (matriculado) {
@@ -220,7 +223,7 @@ function processarHistorico(event) {
                     if (strTipo === "OBR" || strTipo.includes("OBR")) {
                         somaCargaHorariaOBR += cargaHoraria;
                         window.disciplinasAprovadasExcel.push(normalizarNome(nomeDisciplina));
-                        if (dispensado) somaAproveitamentosExcel += cargaHoraria;
+                        if (dispensadoItem5) somaAproveitamentosExcel += cargaHoraria;
                     } else if (strTipo === "OPT" || strTipo.includes("OPT")) {
                         somaCargaHorariaOPT += cargaHoraria;
                     } else if (strTipo === "NFC" || strTipo.includes("NFC")) {

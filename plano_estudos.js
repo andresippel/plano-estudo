@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnCopiarSEI = document.getElementById('btnCopiarSEI');
     const btnBaixarWord = document.getElementById('btnBaixarWord');
     const alunoInfo = document.getElementById('alunoInfo'); 
+    const semestreAtual = document.getElementById('semestreAtual'); // Novo input
 
     if (btnCopiarSEI) {
         btnCopiarSEI.addEventListener('click', function() {
@@ -39,14 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const link = document.createElement('a');
             link.href = url;
             
-            // LÓGICA DE NOME DO ARQUIVO: Usa o nome original, ou o campo digitado, ou o padrão
             let nomeDownload = "Plano_de_Estudos_FAODO.doc";
             if (window.nomeArquivoOriginal && window.nomeArquivoOriginal !== "") {
                 nomeDownload = window.nomeArquivoOriginal + ".doc";
             } else {
                 const elInfo = document.getElementById('alunoInfo');
                 if (elInfo && elInfo.value.trim() !== "") {
-                    // Remove caracteres proibidos em nomes de arquivos caso existam
                     nomeDownload = elInfo.value.trim().replace(/[<>:"/\\|?*]+/g, '_') + ".doc";
                 }
             }
@@ -59,9 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (alunoInfo) {
-        alunoInfo.addEventListener('input', window.atualizarPreviewDocumento);
-    }
+    // Gatilhos para atualizar a prévia na tela em tempo real
+    if (alunoInfo) alunoInfo.addEventListener('input', window.atualizarPreviewDocumento);
+    if (semestreAtual) semestreAtual.addEventListener('input', window.atualizarPreviewDocumento);
     
     document.getElementById('listaAproveitamento').addEventListener('change', function(e) {
         if(e.target.classList.contains('chk-aproveitamento')) {
@@ -80,7 +79,10 @@ window.atualizarPreviewDocumento = function() {
 
 function gerarHTMLPlanoEstudos() {
     const elAlunoInfo = document.getElementById('alunoInfo');
+    const elSemestreAtual = document.getElementById('semestreAtual');
+
     let infoStr = elAlunoInfo ? elAlunoInfo.value.trim() : "";
+    let semestreBaseStr = elSemestreAtual && elSemestreAtual.value.trim() !== "" ? elSemestreAtual.value.trim() : "2026/1";
     
     let nome = "Não informado";
     let rga = "Não informado";
@@ -96,6 +98,22 @@ function gerarHTMLPlanoEstudos() {
     }
 
     const enquadramento = window.ultimoEnquadramento || "Não calculado";
+
+    // --- LÓGICA DE CÁLCULO DO SEMESTRE ---
+    // Aceita formatos como 2026/1, 2026.1, ou 2026-1
+    let partesSemestre = semestreBaseStr.split(/[\/\.\-]/);
+    let anoCalendario = parseInt(partesSemestre[0]) || new Date().getFullYear();
+    let semestreCalendario = parseInt(partesSemestre[1]) || 1;
+
+    function calcularProximoPeriodo() {
+        semestreCalendario++;
+        if (semestreCalendario > 2) {
+            semestreCalendario = 1;
+            anoCalendario++;
+        }
+        return `${anoCalendario}/${semestreCalendario}`;
+    }
+    // -------------------------------------
 
     let html = `
 <p class="Item_Nivel1" style="font-weight: bold;">Identificação do Acadêmico:</p>
@@ -149,7 +167,11 @@ function gerarHTMLPlanoEstudos() {
                 return !window.disciplinasAprovadas.includes(normalizarNome(d.nome));
             });
 
+            // Só processa e calcula nova data se houver disciplina pendente neste bloco
             if (disciplinasPendentes.length > 0) {
+                // Calcula a data futura deste bloco inteiro
+                let periodoLetivoPlanejado = calcularProximoPeriodo();
+
                 html += `
         <tr>
             <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda"><strong>${semestre.numero}° semestre</strong></p></td>
@@ -164,7 +186,7 @@ function gerarHTMLPlanoEstudos() {
                     html += `
         <tr>
             <td style="width:60%;"><p class="Tabela_Texto_Alinhado_Esquerda">${d.nome}</p></td>
-            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">&nbsp;</p></td>
+            <td style="width:20%;"><p class="Tabela_Texto_Centralizado">${periodoLetivoPlanejado}</p></td>
             <td style="width:20%;"><p class="Tabela_Texto_Centralizado">${d.ch}</p></td>
         </tr>`;
                 });
