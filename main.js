@@ -212,7 +212,7 @@ function processarHistorico(event) {
                 const dispensadoItem5 = situacaoLimpa.includes("DISPENSADO POR ANALISE DE CURRICULO");
                 
                 // Regra geral para saber se a disciplina já foi feita de alguma forma (para não repetir no plano)
-                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || situacaoLimpa.includes("DISPENSA") || situacaoLimpa.includes("EQUIVALENCIA");
+                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || situacaoLimpa.includes("DISPENSA") || situacaoLimpa.includes("EQUIVALENCIA") || strSituacao.startsWith("APR");
                 const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
 
                 if (matriculado) {
