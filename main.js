@@ -64,7 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.dadosDoCurso = jsonImportado;
                     localStorage.setItem('gradeCurso_v3', JSON.stringify(jsonImportado));
                     atualizarInterfaceCurso();
-                    alert(`Grade do curso de ${jsonImportado.curso} importada com sucesso!`);
+                    // Feedback sutil via console em vez de alert
+                    console.log(`Grade do curso de ${jsonImportado.curso} importada com sucesso!`);
                 } catch (erro) {
                     alert("Erro ao ler o arquivo JSON. Verifique se o formato está correto.");
                 }
@@ -203,17 +204,15 @@ function processarHistorico(event) {
 
                 const cargaHoraria = parseFloat(chStr);
                 const strTipo = String(tipo).trim().toUpperCase();
-                const strSituacao = String(situacao).trim().toUpperCase();
                 
-                // Remove acentos para padronizar e evitar erros de digitação no sistema original
-                const situacaoLimpa = strSituacao.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                // CORREÇÃO: Padronização total da string de situação sem acentos
+                const situacaoLimpa = String(situacao).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 
-                // REGRA ESTRITA: Soma no Item 5 APENAS se for exatamente a análise de currículo
                 const dispensadoItem5 = situacaoLimpa.includes("DISPENSADO POR ANALISE DE CURRICULO");
                 
-                // Regra geral para saber se a disciplina já foi feita de alguma forma (para não repetir no plano)
-                const aprovado = strSituacao === "APROVADO" || strSituacao.startsWith("APR") || situacaoLimpa.includes("DISPENSA") || situacaoLimpa.includes("EQUIVALENCIA") || strSituacao.startsWith("APR");
-                const matriculado = strSituacao === "MATRICULADO" || strSituacao.startsWith("MAT");
+                // CORREÇÃO: Uso exclusivo da situacaoLimpa para todas as validações
+                const aprovado = situacaoLimpa === "APROVADO" || situacaoLimpa.startsWith("APR") || situacaoLimpa.includes("DISPENSA") || situacaoLimpa.includes("EQUIVALENCIA");
+                const matriculado = situacaoLimpa === "MATRICULADO" || situacaoLimpa.startsWith("MAT");
 
                 if (matriculado) {
                     window.disciplinasMatriculadas.push({ nome: nomeDisciplina, ch: cargaHoraria });
@@ -242,7 +241,7 @@ function processarHistorico(event) {
             renderizarListaAproveitamento();
             calcularSemestre();
             
-            alert(`Histórico processado! Obrigatórias: ${somaCargaHorariaOBR}h | Optativas: ${somaCargaHorariaOPT}h.`);
+            // Removido o alert() bloqueante. O feedback visual da UI já é suficiente.
 
         } catch (err) {
             alert("Erro ao processar a planilha. Verifique o formato do arquivo.");
@@ -289,6 +288,7 @@ function calcularSemestre() {
     let chAcumulada = 0;
     let semestreEnquadrado = null;
 
+    // CORREÇÃO: Lógica de Enquadramento Refatorada
     for (let i = 0; i < window.dadosDoCurso.semestres.length; i++) {
         let semestre = window.dadosDoCurso.semestres[i];
         let chTotalSemestre = semestre.disciplinas.reduce((soma, disciplina) => soma + disciplina.ch, 0);
@@ -296,11 +296,14 @@ function calcularSemestre() {
 
         if (chAcumulada > cargaHorariaEstudanteFinal) {
             let diferenca = chAcumulada - cargaHorariaEstudanteFinal;
+            
             if (diferenca <= 136) {
-                let proximoSemestre = Math.min(i + 2, window.dadosDoCurso.semestres.length);
-                semestreEnquadrado = `${proximoSemestre}º semestre`;
+                // Avança para o subsequente, garantindo que não ultrapasse o total de semestres do curso
+                let proximoIndice = Math.min(i + 2, window.dadosDoCurso.semestres.length);
+                semestreEnquadrado = `${proximoIndice}º semestre`;
             } else {
-                semestreEnquadrado = `${semestre.numero}º semestre`;
+                // Fica no semestre atual do cruzamento
+                semestreEnquadrado = `${i + 1}º semestre`;
             }
             break;
         }
